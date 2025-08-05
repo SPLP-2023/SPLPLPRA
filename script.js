@@ -1,27 +1,137 @@
-// script.js
-import {
-  NG_OPTIONS, CE_OPTIONS, CD_OPTIONS,
-  KS1_OPTIONS, KS2_OPTIONS, KS3_OPTIONS,
-  LPL_OPTIONS, SPD_OPTIONS, UW_OPTIONS,
-  CI_OPTIONS, LINE_LENGTH_OPTIONS, SHIELD_OPTIONS,
-  NZ_OPTIONS, TZ_OPTIONS, HZ_OPTIONS, RP_OPTIONS, RT_OPTIONS
-} from './tables/constants.js';
+// script.js (Bundled, Complete)
+// Full lightning protection risk assessment tool script
+// Includes constants, Annex calculations, UI logic, and PDF export (for GitHub Pages)
 
-import {
-  calcAD, calcAM, calcND, calcNM, calcNL, calcNI, calcNDJ
-} from './tables/annexA.js';
+// ------------------------------
+// CONSTANTS
+// ------------------------------
+const LINE_LENGTH_OPTIONS = [100, 200, 500, 1000];
 
-import {
-  calcPA, calcPB, calcPC, calcPM,
-  calcPU, calcPV, calcPW, calcPLI, calcPZ
-} from './tables/annexB.js';
+// ------------------------------
+// ANNEX A - N_x Calculations
+// ------------------------------
+function calcAD(H, L, W) { return H * (L + W); }
+function calcAM(L, W) { return 2 * 500 * (L + W) + Math.PI * 500 * 500; }
+function calcND(Ng, AD, CE, KS1) { return Ng * AD * CE * KS1; }
+function calcNM(Ng, AM, CE) { return Ng * AM * CE; }
+function calcNL(Ng, AL, CE, CLD) { return Ng * AL * CE * CLD; }
+function calcNI(Ng, AI, CE, CLI) { return Ng * AI * CE * CLI; }
+function calcNDJ(Ng, ADJ, CE, CDJ, KS1_remote) { return Ng * ADJ * CE * CDJ * KS1_remote; }
 
-import {
-  calcD1Loss, calcD2Loss, calcD3Loss
-} from './tables/annexC.js';
+// ------------------------------
+// ANNEX B - P_x Probabilities
+// ------------------------------
+function calcPA(PTA, PB) { return PTA * PB; }
+function calcPB(PB) { return PB; }
+function calcPC(PSPD) { return PSPD; }
+function calcPM(PM) { return PM; }
+function calcPU(PEB) { return PEB; }
+function calcPV(PEB) { return PEB; }
+function calcPW(PSPD) { return PSPD; }
+function calcPLI(PLI) { return PLI; }
+function calcPZ(PLI) { return PLI; }
 
-import { exportPDF as genPDF } from './pdf/pdfGenerator.js';
+// ------------------------------
+// ANNEX C - L_x Losses
+// ------------------------------
+function calcD1Loss(rt, LT, nz, nt, tz) {
+  return rt * LT * (nz / nt) * (tz / 8760);
+}
+function calcD2Loss(rp, rf, hz, LF, nz, nt, tz) {
+  return rp * rf * hz * LF * (nz / nt) * (tz / 8760);
+}
+function calcD3Loss(LO, nz, nt, tz) {
+  return LO * (nz / nt) * (tz / 8760);
+}
 
+// ------------------------------
+// PDF GENERATOR
+// ------------------------------
+function exportPDF(data, results) {
+  const doc = new window.jspdf.jsPDF();
+  const title = `Risk Assessment - ${data.project.caseName}`;
+
+  doc.setFontSize(14);
+  doc.text('Lightning protection risk management calculations', 14, 20);
+  doc.setFontSize(12);
+  doc.text('To BS EN 62305-2:2012', 14, 27);
+  doc.text(`Project name: ${data.project.projectName}`, 14, 35);
+  doc.text(`Client: ${data.project.client}`, 14, 42);
+  doc.text(`Prepared by: ${data.project.preparedBy}`, 14, 49);
+  doc.text(`Date: ${data.project.date}`, 14, 56);
+  doc.text(`Case name: ${data.project.caseName}`, 14, 63);
+
+  doc.autoTable({
+    startY: 70,
+    head: [['Risk','Value','Tolerable','Status']],
+    body: results.map(r=>[
+      r.name,
+      r.value.toExponential(3),
+      r.tolerable.toExponential(1),
+      r.status
+    ])
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(11);
+  doc.text('Environmental Factors:', 14, y);
+  y += 6;
+  Object.entries(data.environment).forEach(([k,v])=>{
+    doc.text(`  • ${k}: ${v}`, 14, y);
+    y += 5;
+  });
+
+  y += 4;
+  doc.text('Primary Structure:', 14, y);
+  y += 6;
+  ['H','L','W','KS1','KS2','KS3','LPL'].forEach(field=>{
+    const val = data.structure[field] ?? '';
+    doc.text(`  • ${field}: ${val}`, 14, y);
+    y += 5;
+  });
+
+  if (data.remotes.length) {
+    y += 4;
+    doc.text('Remote Structures:', 14, y);
+    y += 6;
+    data.remotes.forEach((r, idx) => {
+      doc.text(`  Structure ${idx+1}: H=${r.H}, L=${r.L}, W=${r.W}, CDJ=${r.CDJ}`, 14, y);
+      y += 5;
+    });
+  }
+
+  if (data.zones.length) {
+    y += 4;
+    doc.text('Zones (LPZs):', 14, y);
+    y += 6;
+    data.zones.forEach((z, idx) => {
+      doc.text(
+        `  Zone ${idx+1}: Type=${z.lpz}, n_z=${z.nz}, t_z=${z.tz}, h_z=${z.hz}, r_p=${z.rp}, r_t=${z.rt}`,
+        14, y
+      );
+      y += 5;
+    });
+  }
+
+  if (data.lines.length) {
+    y += 4;
+    doc.text('Service Lines:', 14, y);
+    y += 6;
+    data.lines.forEach((l, idx) => {
+      doc.text(
+        `  Line ${idx+1}: Type=${l.type}, CI=${l.ci}, Length=${l.length}, Shield=${l.shield}`,
+        14, y
+      );
+      y += 5;
+    });
+  }
+
+  doc.save(`${title}.pdf`);
+}
+
+// ------------------------------
+// UI + RISK CALCULATION
+// ------------------------------
 let zoneCounter = 0;
 let lineCounter = 0;
 let remoteCounter = 0;
@@ -32,14 +142,12 @@ function addZone() {
   document.getElementById("zoneList").appendChild(template);
 }
 function removeZone(btn) { btn.closest(".zone-entry").remove(); }
-
 function addLine() {
   const template = document.getElementById("lineTemplate").content.cloneNode(true);
   template.querySelector(".line-num").innerText = ++lineCounter;
   document.getElementById("lineList").appendChild(template);
 }
 function removeLine(btn) { btn.closest(".line-entry").remove(); }
-
 function addRemote() {
   const template = document.getElementById("remoteTemplate").content.cloneNode(true);
   template.querySelector(".remote-num").innerText = ++remoteCounter;
@@ -107,13 +215,11 @@ function calculateRisk() {
 
   lines.forEach(line=>{
     const AL=40000, AI=4000000;
-    const NL=calcNL(Ng,AL,CE,line.shield),
-          NI=calcNI(Ng,AI,CE,line.shield);
-    const PU=calcPU(+protection.PEB), PV=calcPV(+protection.PEB),
-          PW=calcPW(+protection.PSPD), PLI=calcPLI(0.16), PZ=calcPZ(PLI);
-    const LU=calcD1Loss(1,0.01,1,1,8760),
-          LV=calcD2Loss(1,0.01,1,1,1,8760),
-          LW=calcD3Loss(0,1,1,8760), LZ=LW;
+    const NL=calcNL(Ng,AL,CE,line.shield), NI=calcNI(Ng,AI,CE,line.shield);
+    const PU=calcPU(+protection.PEB), PV=calcPV(+protection.PEB), PW=calcPW(+protection.PSPD);
+    const PLI=calcPLI(0.16), PZ=calcPZ(PLI);
+    const LU=calcD1Loss(1,0.01,1,1,8760), LV=calcD2Loss(1,0.01,1,1,1,8760);
+    const LW=calcD3Loss(0,1,1,8760), LZ=LW;
     RU+=NL*PU*LU; RV+=NL*PV*LV; RW+=NL*PW*LW; RZ+=NI*PZ*LZ;
   });
 
@@ -136,14 +242,15 @@ function calculateRisk() {
   window.lastReport = { data, results };
 }
 
-function exportPDF() {
-  if (!window.lastReport) return alert('Calculate risk first');
-  genPDF(window.lastReport.data, window.lastReport.results);
+function handleExportPDF() {
+  if (!window.lastReport) return alert('Please calculate risk first');
+  exportPDF(window.lastReport.data, window.lastReport.results);
 }
 
+// Attach to window
 Object.assign(window, {
   addZone, removeZone,
   addLine, removeLine,
   addRemote, removeRemote,
-  calculateRisk, exportPDF
+  calculateRisk, exportPDF: handleExportPDF
 });
