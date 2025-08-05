@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lightning Protection Risk Assessment</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Lightning Protection Risk Assessment Tool</h1>
+    <p>Based on BS EN 62305-2:2012 | StrikeRisk v6.0-style</p>
+  </header>  <main>
+    <!-- 1. Project & Case -->
+    <section id="project-details">
+      <h2>Project & Case Information</h2>
+      <form id="projectForm" class="form-grid">
+        <label>Project Name:<input type="text" name="projectName" required /></label>
+        <label>Client:<input type="text" name="client" /></label>
+        <label>Project Address:<input type="text" name="projectAddress" /></label>
+        <label>Prepared By:<input type="text" name="preparedBy" /></label>
+        <label>Date:<input type="date" name="date" /></label>
+        <label>Case Name:<input type="text" name="caseName" /></label>
+      </form>
+    </section><!-- 2. Environmental -->
+<section id="environmental-factors">
+  <h2>Environmental Factors</h2>
+  <form id="envForm" class="form-grid">
+    <label>Ground Flash Density (Ng):
+      <select name="Ng">
+        <option value="">Select Ng</option>
+        <option value="0.2">5 thunderstorm days/y (0.2)</option>
+        <option value="0.5">10 days/y (0.5)</option>
+        <option value="1.1">20 days/y (1.1)</option>
+        <option value="1.9">30 days/y (1.9)</option>
+        <option value="2.8">40 days/y (2.8)</option>
+        <option value="3.7">50 days/y (3.7)</option>
+        <option value="4.7">60 days/y (4.7)</option>
+        <option value="6.9">80 days/y (6.9)</option>
+        <option value="9.2">100 days/y (9.2)</option>
+      </select>
+    </label>
+    <label>Location Factor (CD):
+      <select name="CD">
+        <option value="">Select CD</option>
+        <option value="1.0">Isolated or hilltop (1.0)</option>
+        <option value="0.5">Similar surroundings (0.5)</option>
+        <option value="0.25">Surrounded by taller (0.25)</option>
+      </select>
+    </label>
+    <label>Environmental Factor (CE):
+      <select name="CE">
+        <option value="">Select CE</option>
+        <option value="1.0">Rural (1.0)</option>
+        <option value="0.5">Suburban (0.5)</option>
+        <option value="0.1">Urban (0.1)</option>
+        <option value="0.01">Urban > 20 m (0.01)</option>
+      </select>
+    </label>
+    <label>External LPZ:
+      <select name="extLPZ">
+        <option value="">Select LPZ</option>
+        <option value="0">LPZ 0</option>
+        <option value="0a">LPZ 0a</option>
+        <option value="0b">LPZ 0b</option>
+      </select>
+    </label>
+    <label>Internal LPZ:
+      <select name="intLPZ">
+        <option value="">Select LPZ</option>
+        <option value="1">LPZ 1</option>
+        <option value="2">LPZ 2</option>
+      </select>
+    </label>
+  </form>
+</section>
+
+<!-- 3. Main Structure -->
+<section id="structure-inputs">
+  <h2>Primary Structure</h2>
+  <form id="structForm" class="form-grid">
+    <label>Height H (m):<input type="number" step="0.01" name="H" required /></label>
+    <label>Length L (m):<input type="number" step="0.01" name="L" required /></label>
+    <label>Width W (m):<input type="number" step="0.01" name="W" required /></label>
+    <label>Structure Factor (KS1):
+      <select name="KS1">
+        <option value="">Select KS1</option>
+        <option value="1.0">Non-conductive (1.0)</option>
+        <option value="0.6">Non-cond w/ LPS I (0.6)</option>
+        <option value="0.6">Cond frame, non-cond cladding (0.6)</option>
+        <option value="0.25">Cond frame, cond cladding (0.25)</option>
+        <option value="0.01">Cond frame, metal cladding 100 mm (0.01)</option>
+        <option value="0.001">Cond frame, metal cladding 10 mm (0.001)</option>
+        <option value="0.0001">Fully metal, no openings (0.0001)</option>
+      </select>
+    </label>
+    <label>Internal Shielding (KS2):
+      <select name="KS2">
+        <option value="">Select KS2</option>
+        <option value="1.0">No shielding (1.0)</option>
+        <option value="0.6">Partial (0.6)</option>
+        <option value="0.3">Full (0.3)</option>
+      </select>
+    </label>
+    <label>Wiring Factor (KS3):
+      <select name="KS3">
+        <option value="">Select KS3</option>
+        <option value="1.0">Normal wiring (1.0)</option>
+        <option value="0.5">Grounded conduit (0.5)</option>
+        <option value="0.1">Optical fibre (0.1)</option>
+      </select>
+    </label>
+    <label>Protection Level (LPL):
+      <select name="LPL">
+        <option value="none">No LPS (PB = 1.0)</option>
+        <option value="IV">IV (PB = 0.2)</option>
+        <option value="III">III (PB = 0.1)</option>
+        <option value="II">II (PB = 0.05)</option>
+        <option value="I">I (PB = 0.02)</option>
+      </select>
+    </label>
+  </form>
+</section>
+
+<!-- 4. Remote Structures -->
+<section id="remote-structures">
+  <h2>Remote Structures</h2>
+  <div id="remoteList"></div>
+  <button type="button" onclick="addRemote()">+ Add Remote Structure</button>
+  <template id="remoteTemplate">
+    <div class="remote-entry">
+      <h3>Remote Structure <span class="remote-num"></span></h3>
+      <label>Height H (m):<input type="number" step="0.01" class="remote-H" /></label>
+      <label>Length L (m):<input type="number" step="0.01" class="remote-L" /></label>
+      <label>Width W (m):<input type="number" step="0.01" class="remote-W" /></label>
+      <label>Location Factor (CDJ):
+        <select class="remote-CDJ">
+          <option value="">Select CDJ</option>
+          <option value="1.0">Isolated or hilltop (1.0)</option>
+          <option value="0.5">Similar surroundings (0.5)</option>
+          <option value="0.25">Surrounded by taller (0.25)</option>
+        </select>
+      </label>
+      <button type="button" onclick="removeRemote(this)">Remove</button>
+    </div>
+  </template>
+</section>
+
+<!-- 5. Service Lines -->
+<section id="line-manager">
+  <h2>Connected Service Lines</h2>
+  <div id="lineList"></div>
+  <button type="button" onclick="addLine()">+ Add Service Line</button>
+  <!-- lineTemplate remains as before -->
+</section>
+
+<!-- 6. Zones -->
+<section id="zone-manager">
+  <h2>Zones (LPZs)</h2>
+  <div id="zoneList"></div>
+  <button type="button" onclick="addZone()">+ Add Zone</button>
+  <!-- zoneTemplate remains as before -->
+</section>
+
+<!-- 7. Protection Measures -->
+<section id="protection-measures">
+  <h2>Protection Measures</h2>
+  <form id="protectionForm" class="form-grid">
+    <label>LPS Installed:
+      <select name="lpsInstalled">
+        <option value="">Select</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </label>
+    <label>Lightning Protection Level (LPL):
+      <select name="LPL">
+        <option value="">Select LPL</option>
+        <option value="">N/A</option>
+        <option value="IV">IV</option>
+        <option value="III">III</option>
+        <option value="II">II</option>
+        <option value="I">I</option>
+      </select>
+    </label>
+    <!-- rest remains -->
+  </form>
+</section>
+
+<!-- 8. Actions & Results -->
+<section id="actions">
+  <button type="button" onclick="calculateRisk()">Calculate Risk</button>
+  <button type="button" onclick="exportPDF()">Export to PDF</button>
+</section>
+<section id="results">
+  <h2>Results</h2>
+  <div id="resultDisplay">Select inputs and click Calculate.</div>
+</section>
+
+  </main>  <!-- Scripts -->  <script src="tables/constants.js"></script>  <script src="tables/annexA.js"></script>  <script src="tables/annexB.js"></script>  <script src="tables/annexC.js"></script>  <script src="zones/zoneManager.js"></script>  <script src="lines/lineManager.js"></script>  <script src="pdf/pdfGenerator.js"></script>  <script src="script.js"></script></body>
+</html>
