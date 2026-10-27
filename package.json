@@ -1,0 +1,7 @@
+{
+  "name": "splplpra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Strike Point Risk: lightning protection risk assessment to BS EN 62305-2:2012 (UK National Annex)",
+  "scripts": { "test": "node tests/run-tests.js" }
+}

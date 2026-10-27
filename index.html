@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strike Point Risk</title>
+<meta name="description" content="Lightning protection risk assessment to BS EN 62305-2:2012 with the UK National Annex.">
+<meta name="theme-color" content="#0767AD">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SP Risk">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <img class="brand" src="assets/logo.png" alt="Strike Point Lightning Protection">
+  <div class="titleblock">
+    <span class="eyebrow" id="stepLabel">BS EN 62305-2:2012 · UK annex</span>
+    <span class="projname" id="projName">New assessment</span>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn" data-action="new" id="btnNew">New</button>
+    <label class="btn" for="fileOpen">Open</label>
+    <input type="file" id="fileOpen" accept=".json,.splra,application/json" hidden>
+    <button type="button" class="btn" data-action="save">Save file</button>
+    <button type="button" class="btn primary" data-action="goto" data-step="report">Export PDF</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="steps" id="steps" aria-label="Assessment steps"></nav>
+  <main id="step" class="step" tabindex="-1"></main>
+  <aside id="live" class="live" aria-label="Live result" aria-live="polite"></aside>
+</div>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="js/tables.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/view3d.js"></script>
+<script src="js/report.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
